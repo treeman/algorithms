@@ -5,6 +5,13 @@ use locale;
 
 use Modern::Perl;
 use Getopt::Long;
+use File::Basename;
+
+# Main config
+# TODO could autodiscover?
+# how to see through symlinks?
+my $basedir = "/home/tree/code/algorithms";
+my $libdir = "$basedir/lib";
 
 my $debug;
 my $uva_submit;
@@ -34,7 +41,6 @@ sub list_of_headers {
     return @res;
 }
 
-my $libdir = "/home/tree/code/algorithms/lib";
 my @headers = list_of_headers($libdir);
 my %is_header;
 map { $is_header{$_} = 1; } @headers;
@@ -187,7 +193,7 @@ sub shall_continue {
 sub kattis_submit_cmd {
     my ($problem, @files) = @_;
 
-    return "ksubmit -l $lang -p $problem " . join (" ", @files);
+    return "python $basedir/ksubmit.py -l $lang -p $problem " . join (" ", @files);
 }
 
 sub kattis_submit {
@@ -233,7 +239,9 @@ sub uva_submit {
         if (shall_continue()) {
             # Herp derp
             # it works.. why care?
-            exec("node /home/tree/code/uva/uvaSubmit.js $gen_file $problem");
+            my $cmd = "/usr/bin/node $basedir/uvaSubmit.js $gen_file $problem";
+            say $cmd if $debug;
+            `$cmd`;
         }
         unlink $gen_file;
     }
