@@ -6,12 +6,14 @@ use locale;
 use Modern::Perl;
 use Getopt::Long;
 use File::Basename;
+use File::Copy;
 
 # Main config
 # TODO could autodiscover?
 # how to see through symlinks?
 my $basedir = "/home/tree/code/algorithms";
 my $libdir = "$basedir/lib";
+my $template_file = "$basedir/template.cxx";
 
 my $debug;
 my $uva_submit;
@@ -19,6 +21,7 @@ my $lang = "C++";
 my $help;
 my $obj = "a.out";
 my $generate;
+my $template;
 my $kattis_submit;
 
 GetOptions(
@@ -29,6 +32,7 @@ GetOptions(
     'language|l=s' => \$lang,
     'obj|o' => \$obj,
     'generate|g' => \$generate,
+    'template|t' => \$template,
 );
 
 sub list_of_headers {
@@ -251,7 +255,12 @@ sub uva_submit {
 }
 
 sub main {
-    if (!@ARGV || $help) {
+    if ($template) {
+        copy($template_file, "main.cxx");
+        say "Generated 'main.cxx'";
+        return;
+    }
+    elsif (!@ARGV || $help) {
         help();
         return;
     }
