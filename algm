@@ -1,0 +1,277 @@
+#!/usr/bin/perl -w
+
+use utf8;
+use locale;
+
+use Modern::Perl;
+use Getopt::Long;
+
+my $debug;
+my $uva_submit;
+my $lang = "C++";
+my $help;
+my $obj = "a.out";
+my $generate;
+my $kattis_submit;
+
+GetOptions(
+    'help|h' => \$help,
+    'debug|d' => \$debug,
+    'uva|u=s' => \$uva_submit,
+    'kattis|k=s' => \$kattis_submit,
+    'language|l=s' => \$lang,
+    'obj|o' => \$obj,
+    'generate|g' => \$generate,
+);
+
+sub list_of_headers {
+    my $path = shift;
+    opendir my $dh, $path or die "Cannot open dir: $path!";
+    my @files = readdir $dh;
+    close $dh;
+    my @res = grep(/^[^.].*\.hxx$/, @files);
+    #say join (", ", @res);
+    return @res;
+}
+
+my $libdir = "/home/tree/code/algorithms/lib";
+my @headers = list_of_headers($libdir);
+my %is_header;
+map { $is_header{$_} = 1; } @headers;
+
+sub help {
+    say "algm main.cxx";
+    say "   Compile C++11 and with headers from $libdir.";
+    say "   Submit like this to kattis.";
+    say "";
+    say "algm main.cxx -u problem_id";
+    say "algm main.cxx --uva problem_id";
+    say "   Submit to uva. Specify numeric id eg 10766.";
+    say "";
+    say "algm main.cxx -k problem_id";
+    say "algm main.cxx --kattis problem_id";
+    say "   Submit to kattis. Specify problem string eg organising.";
+    say "";
+    say "--language -l";
+    say "   Override language. Currently borked and only undersands C++ (.cxx .hxx)";
+    say "";
+    say "--obj -o";
+    say "   Specify output object. Defaults to a.out.";
+    say "";
+    say "--generate -g";
+    say "   Generate a concatenated main file.";
+    say "   Submit like this to uva.";
+    say "";
+    say "--help -h";
+    say "";
+    say "--debug -d";
+    say "";
+}
+
+my %seen;
+
+sub list_of_seen {
+    my @res = @_;
+    for my $file (keys %seen) {
+        push (@res, $file);
+    }
+    return @res;
+}
+
+sub contents_with_dependencies {
+    my $file = shift;
+
+    my @contents;
+
+    open my $fh, $file or die "Couldn't open file $file!";
+    my $line_num = 0;
+    while (my $line = <$fh>) {
+        ++$line_num;
+        if ($line =~ /^\s*#include\s*"([^"]+)"\s*$/) {
+            my $inc_file = $1;
+            next if $seen{$inc_file};
+
+            if (!$is_header{$inc_file}) {
+                die "Could not find include file \"$inc_file\" in $file line $line_num\n";
+            }
+
+            my $path = "$libdir/$inc_file";
+            push (@contents, "///////// START $inc_file //////////\n");
+            push (@contents, contents_with_dependencies($path));
+            push (@contents, "///////// END $inc_file //////////\n");
+            $seen{$inc_file} = 1;
+        }
+        elsif ($line =~ /^\s*#pragma\s+once\s*$/) {
+            next;
+        }
+        else {
+            push (@contents, $line);
+        }
+    }
+    close $fh;
+
+    return @contents;
+}
+
+# Concat and create a concatenation of all contents.
+# Return temporary filename.
+sub generate_concat_file {
+    my $file = shift;
+    my @contents = contents_with_dependencies ($file);
+
+    if ($file !~ /(.*)\.cxx$/) {
+        die "Didn't match .cxx!!";
+    }
+    my $tmp_file = "$1-concat.cxx";
+
+    open my $out, ">", $tmp_file or die "Couldn't write to $tmp_file!";
+    for my $line (@contents) {
+        print $out $line;
+    }
+    close $out;
+    return $tmp_file;
+}
+
+sub compile_command {
+    my @files = @_;
+    my $mm = "g++ -g -O2 -static -std=gnu++0x -Wall -o $obj";
+
+    return "$mm " . join (" ", @files);
+}
+
+sub lib_compile_command {
+    return compile_command(@_) . " -I$libdir";
+}
+
+sub dependencies_command {
+    my @files = @_;
+    my $mm = "g++ -g -O2 -static -std=gnu++0x -Wall -I$libdir -M";
+
+    return "$mm " . join (" ", @files);
+}
+
+sub concat_and_compile {
+    my ($file) = @_;
+    my $tmp_file = generate_concat_file($file);
+    my $cmd = compile_command($tmp_file);
+    say $cmd if $debug;
+    unlink $obj; # hack!
+    `$cmd`;
+    if (!-f $obj) {
+        return 0;
+    }
+    else {
+        return $tmp_file;
+    }
+}
+
+# Compile as regular, for nice error messages.
+sub compile_with_lib {
+    my $cmd = lib_compile_command(@_);
+    say $cmd if $debug;
+    unlink $obj; # hack!
+    `$cmd`;
+    return -f $obj;
+}
+
+# Prompt user
+sub shall_continue {
+    say "Submit (y/N)?";
+    while (my $line = <STDIN>) {
+        return 0 if $line =~ /^\s*$/;
+        return 1 if $line =~ /^\s*[yY]\s*$/;
+        return 0 if $line =~ /^\s*[nN]\s*$/;
+    }
+}
+
+sub kattis_submit_cmd {
+    my ($problem, @files) = @_;
+
+    return "ksubmit -l $lang -p $problem " . join (" ", @files);
+}
+
+sub kattis_submit {
+    my $file = shift;
+    my $problem = $kattis_submit;
+
+    # Make sure we can compile
+    if (!compile_with_lib($file)) {
+        say "Failed to compile with libs.";
+        return;
+    }
+
+    my $ccmd = dependencies_command($file);
+    say $ccmd if $debug;
+    my $gcc_linked = `$ccmd`;
+    my $includes = `ls -1 2>&- $gcc_linked`; # Hack
+
+    my @includes;
+    for my $file (split /\n/, $includes) {
+        next if $file =~ /^\/usr/; # More hack
+        push (@includes, $file);
+    }
+
+    #say "Includes: " . join (", ", @includes);
+
+    say "Submitting to Kattis";
+
+    my $scmd = kattis_submit_cmd($problem, @includes);
+    say $scmd if $debug;
+    exec ($scmd);
+}
+
+sub uva_submit {
+    my $file = shift;
+    my $problem = $uva_submit;
+
+    if (my $gen_file = concat_and_compile($file, 1)) {
+        say "Submitting to UVa";
+        say "Problem: $problem";
+        say "Language: $lang";
+        my @includes = list_of_seen($file);
+        say "Files: " . join (", ", @includes);
+        if (shall_continue()) {
+            # Herp derp
+            # it works.. why care?
+            exec("node /home/tree/code/uva/uvaSubmit.js $gen_file $problem");
+        }
+        unlink $gen_file;
+    }
+    else {
+        say "Failed to concat and compile.";
+    }
+}
+
+sub main {
+    if (!@ARGV || $help) {
+        help();
+        return;
+    }
+
+    if (scalar @ARGV != 1) {
+        say "Only supports a single file.";
+        return;
+    }
+    my $file = shift @ARGV;
+    if ($file !~ /\.cxx$/) {
+        say "Only supports .cxx files.";
+        return;
+    }
+
+    if ($generate) {
+        my $out = generate_concat_file($file);
+        say "Generated '$out'";
+    }
+    elsif ($uva_submit) {
+        uva_submit($file);
+    }
+    elsif ($kattis_submit) {
+        kattis_submit($file);
+    }
+    else {
+        compile_with_lib($file);
+    }
+}
+
+main();
+
