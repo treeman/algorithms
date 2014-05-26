@@ -1,3 +1,4 @@
+#pragma once
 
 vi match, vis;
 int aug(int l, const vector<vi> &adj_list) {

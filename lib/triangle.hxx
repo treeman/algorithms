@@ -1,3 +1,4 @@
+#pragma once
 
 template<typename T>
 double area(Point<T> a, Point<T> b, Point<T> c) {

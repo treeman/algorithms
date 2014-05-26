@@ -1,3 +1,4 @@
+#pragma once
 
 // Solve Ax = b, output x.
 // 1: ok

@@ -1,3 +1,4 @@
+#pragma once
 
 // Aho-Corasick's string matching algorithm.
 // Return a vector of matching positions corresponding to the pattern index.

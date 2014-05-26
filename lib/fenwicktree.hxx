@@ -1,3 +1,4 @@
+#pragma once
 
 // Used to answer dynamic range sum queries.
 template<typename T>

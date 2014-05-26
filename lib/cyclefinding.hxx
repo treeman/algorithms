@@ -1,3 +1,4 @@
+#pragma once
 
 // Return <start, length> of cycle defined by f and x0.
 // Define a function f before.

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "matrix.hxx"
 
 // Kirchoff's theorem.

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "points.hxx"
 
 template<typename T>
