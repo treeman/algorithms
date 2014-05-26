@@ -4,11 +4,11 @@
 // Will handle negative weights and signal it with NEG_INF.
 // Impossible will be INF. Directed edges.
 // Input and output as adjecency matrix.
-const ll INF = numeric_limits<ll>::max();
-const ll NEG_INF = numeric_limits<ll>::min();
 
 template<typename T>
 vector<vector<T> > shortest_path_all_pairs(const vector<vector<T> > &adj_matrix) {
+    const T INF = numeric_limits<T>::max();
+    const T NEG_INF = numeric_limits<T>::min();
     const int n = adj_matrix.size();
     vector<vector<T> > dist(adj_matrix.begin(), adj_matrix.end());
 

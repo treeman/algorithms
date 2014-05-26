@@ -23,7 +23,7 @@ tuple<Cost, Flow, vector<vector<Flow>>> max_flow_matrix(
             back_adj_list[v].push_back(u);
     }
 
-    vector<vector<Flow>> flow(n, vi(n, 0)); // Current flow.
+    vector<vector<Flow>> flow(n, vector<Flow>(n, 0)); // Current flow.
     vector<Cost> pi(n, 0); // Calculate potentials.
 
     Flow mf(0); // Total flow through the network.
