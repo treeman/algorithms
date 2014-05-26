@@ -7,7 +7,7 @@
 // Flow will be represented as an adjecency matrix.
 // Uses relabelling with dijkstra. Costs must be nonnegative!
 template<typename Cost, typename Flow>
-tuple<Cost, Flow, vector<vector<Flow>>> max_flow_matrix(
+tuple<Flow, Cost, vector<vector<Flow>>> max_flow_matrix(
         const vector<vi> &adj_list, // Adjecency list.
         const vector<vector<Flow>> &capacity, // Adjecency matrix with capacity.
         const vector<vector<Cost>> &cost, // Adjecency matrix with cost.

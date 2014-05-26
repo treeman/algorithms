@@ -7,31 +7,7 @@
  * Testing and debugging:
  */
 
-#include <cmath>
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
-#include <iostream>
-#include <map>
-#include <queue>
-#include <deque>
-#include <set>
-#include <unordered_set>
-#include <string>
-#include <stack>
-#include <bitset>
-#include <algorithm>
-#include <cstring>
-#include <sstream>
-#include <complex>
-using namespace std;
-
-typedef vector<int> vi;
-typedef pair<int, int> ii;
-typedef tuple<int, int, int> iii;
-typedef long long ll;
-typedef unsigned long long ull;
-typedef unsigned long nat;
+#include "std.hxx"
 
 const int INF = 1e9;
 const double EPS = 1e-9;
