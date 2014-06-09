@@ -245,7 +245,7 @@ sub uva_submit {
         if (shall_continue()) {
             # Herp derp
             # it works.. why care?
-            my $cmd = "/usr/bin/node $basedir/uvaSubmit.js $gen_file $problem";
+            my $cmd = "/usr/local/bin/node $basedir/uvaSubmit.js $gen_file $problem";
             say $cmd if $debug;
             `$cmd`;
         }
