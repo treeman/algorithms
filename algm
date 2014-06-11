@@ -71,6 +71,7 @@ sub help {
     say "--generate -g";
     say "   Generate a concatenated main file.";
     say "   Submit like this to uva.";
+    say "";
     say "--template -t";
     say "   Copy template file as main.cxx in current folder.";
     say "";
